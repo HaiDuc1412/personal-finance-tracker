@@ -1,0 +1,34 @@
+package com.haiduc.personalfinancetracker.category;
+
+import com.haiduc.personalfinancetracker.common.enums.TransactionType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface CategoryRepository extends JpaRepository<Category, UUID> {
+
+    @Query("SELECT c FROM Category c WHERE c.user IS NULL OR c.user.id = :userId")
+    List<Category> findAllAvailableForUser(String name);
+
+    Optional<Category> findByNameAndUserIsNull(String name);
+
+    boolean existsByNameAndUserId(String name, UUID userId);
+
+    @Query("SELECT c FROM Category c WHERE c.user IS NULL OR c.user.id = :userId")
+    List<Category> findAllAvailableForUser(@Param("userId") UUID userId);
+
+    // Filter thêm theo type
+    @Query("SELECT c FROM Category c WHERE (c.user IS NULL OR c.user.id = :userId) AND c.type = :type")
+    List<Category> findAllAvailableForUserByType(@Param("userId") UUID userId,
+                                                 @Param("type") TransactionType type);
+
+    @Modifying
+    @Query("UPDATE Transaction t SET t.category.id = :newCategoryId WHERE t.category.id = :oldCategoryId")
+    void reassignCategory(@Param("oldCategoryId") UUID oldCategoryId,
+                          @Param("newCategoryId") UUID newCategoryId);
+}

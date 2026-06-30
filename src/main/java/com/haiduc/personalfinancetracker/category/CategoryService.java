@@ -7,6 +7,9 @@ import com.haiduc.personalfinancetracker.common.exception.AppException;
 import com.haiduc.personalfinancetracker.transaction.TransactionRepository;
 import com.haiduc.personalfinancetracker.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +23,7 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
 
+    @Cacheable(value = "categories", key = "#currentUser.id + ':' + #type")
     public List<CategoryResponse> getCategories(User currentUser, TransactionType type) {
         UUID userId = currentUser.getId();
 
@@ -32,6 +36,7 @@ public class CategoryService {
                 .toList();
     }
 
+    @CacheEvict(value = "categories", key = "#currentUser.id + ':' + null")
     public CategoryResponse createCategory(User currentUser, CategoryRequest request) {
         boolean nameExists = categoryRepository
                 .findAllAvailableForUser(currentUser.getId())
@@ -52,6 +57,7 @@ public class CategoryService {
         return toResponse(categoryRepository.save(category), currentUser.getId());
     }
 
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse updateCategory(User currentUser, UUID categoryId, CategoryRequest request) {
         Category category = getOwnedCategoryOrThrow(currentUser, categoryId);
 
@@ -71,6 +77,7 @@ public class CategoryService {
         return toResponse(categoryRepository.save(category), currentUser.getId());
     }
 
+    @CacheEvict(value = "categories", allEntries = true)
     @Transactional
     public void deleteCategory(User currentUser, UUID categoryId) {
         Category category = getOwnedCategoryOrThrow(currentUser, categoryId);

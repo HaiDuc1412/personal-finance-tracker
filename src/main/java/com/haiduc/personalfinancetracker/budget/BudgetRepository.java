@@ -23,17 +23,22 @@ public interface BudgetRepository extends JpaRepository<Budget, UUID> {
     Optional<Budget> findByIdAndUser(UUID id, User user);
 
     @Query("""
-        SELECT COALESCE(SUM(t.amount), 0)
-        FROM Transaction t
-        WHERE t.user = :user
-          AND t.category = :category
-          AND t.isDeleted = false
-          AND FUNCTION('MONTH', t.transactionDate) = :month
-          AND FUNCTION('YEAR', t.transactionDate) = :year
-        """)
+            SELECT COALESCE(SUM(t.amount), 0)
+            FROM Transaction t
+            WHERE t.user = :user
+              AND t.category = :category
+              AND t.type = 'EXPENSE'
+              AND t.isDeleted = false
+              AND EXTRACT(MONTH FROM t.transactionDate) = :month
+              AND EXTRACT(YEAR FROM t.transactionDate) = :year
+            """)
     BigDecimal sumSpentByUserAndCategoryAndMonthAndYear(
             @Param("user") User user,
             @Param("category") Category category,
             @Param("month") Short month,
             @Param("year") Short year);
+
+    // Tìm 1 budget cụ thể theo user + category + tháng (dùng cho alert check)
+    Optional<Budget> findByUserAndCategoryAndMonthAndYear(
+            User user, Category category, Short month, Short year);
 }

@@ -11,6 +11,9 @@ import com.haiduc.personalfinancetracker.common.exception.ResourceNotFoundExcept
 import com.haiduc.personalfinancetracker.transaction.dto.CategorySummary;
 import com.haiduc.personalfinancetracker.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,10 @@ public class BudgetService {
 
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "budgets",    allEntries = true),
+            @CacheEvict(value = "dashboard",  allEntries = true)
+    })
     public BudgetResponse createBudget(BudgetRequest request) {
         User currentUser = getCurrentUser();
 
@@ -67,10 +74,9 @@ public class BudgetService {
     }
 
 
+    @Cacheable(value = "budgets", key = "#currentUser.id + ':' + #resolvedMonth + ':' + #resolvedYear")
     @Transactional(readOnly = true)
-    public List<BudgetResponse> getBudgets(Short month, Short year) {
-        User currentUser = getCurrentUser();
-
+    public List<BudgetResponse> getBudgets(User currentUser, Short month, Short year) {
         LocalDate now = LocalDate.now();
         Short resolvedMonth = (month != null) ? month : (short) now.getMonthValue();
         Short resolvedYear = (year != null) ? year : (short) now.getYear();
@@ -92,6 +98,10 @@ public class BudgetService {
 
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "budgets",   allEntries = true),
+            @CacheEvict(value = "dashboard", allEntries = true)
+    })
     public BudgetResponse updateBudget(UUID id, BudgetRequest request) {
         User currentUser = getCurrentUser();
         Budget budget = findBudgetOrThrow(id, currentUser);
@@ -127,6 +137,10 @@ public class BudgetService {
 
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "budgets",   allEntries = true),
+            @CacheEvict(value = "dashboard", allEntries = true)
+    })
     public void deleteBudget(UUID id) {
         User currentUser = getCurrentUser();
         Budget budget = findBudgetOrThrow(id, currentUser);

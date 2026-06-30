@@ -3,12 +3,14 @@ package com.haiduc.personalfinancetracker.budget;
 import com.haiduc.personalfinancetracker.budget.dto.BudgetRequest;
 import com.haiduc.personalfinancetracker.budget.dto.BudgetResponse;
 import com.haiduc.personalfinancetracker.common.ApiResponse;
+import com.haiduc.personalfinancetracker.user.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,9 +37,10 @@ public class BudgetController {
     @GetMapping
     @Operation(summary = "Get budgets (default: current month)")
     public ResponseEntity<ApiResponse<List<BudgetResponse>>> getBudgets(
+            @AuthenticationPrincipal User currentUser,
             @RequestParam(required = false) Short month,
             @RequestParam(required = false) Short year) {
-        List<BudgetResponse> response = budgetService.getBudgets(month, year);
+        List<BudgetResponse> response = budgetService.getBudgets(currentUser, month, year);
         return ResponseEntity.ok(ApiResponse.success("Budgets retrieved successfully", response));
     }
 

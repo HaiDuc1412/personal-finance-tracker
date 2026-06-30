@@ -35,3 +35,6 @@ build/
 
 .env
 *.env
+
+# Local context/notes files
+PFT_Context_Step12.md

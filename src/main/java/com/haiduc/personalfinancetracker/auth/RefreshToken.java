@@ -35,6 +35,9 @@ public class RefreshToken {
     @Column(name = "is_revoked", nullable = false)
     private boolean isRevoked = false;
 
+    @Column(name = "revoked_at")
+    private OffsetDateTime revokedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 

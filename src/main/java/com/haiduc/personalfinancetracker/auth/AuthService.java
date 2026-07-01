@@ -95,16 +95,34 @@ public class AuthService {
                         HttpStatus.UNAUTHORIZED
                 ));
 
-        if (!refreshToken.isValid()) {
-            throw new AppException("Refresh token is expired or revoked",
+        User user = refreshToken.getUser();
+
+        if (refreshToken.isRevoked()) {
+            OffsetDateTime revokedAt = refreshToken.getRevokedAt();
+            long gracePeriodSeconds = 15; // 15 seconds grace period for race conditions/network retries
+
+            if (revokedAt != null && revokedAt.plusSeconds(gracePeriodSeconds).isAfter(OffsetDateTime.now())) {
+                log.info("Concurrent refresh request within grace period for user: {}", user.getEmail());
+                return buildAuthResponse(user);
+            } else {
+                log.warn("Security alert: reused refresh token detected outside grace period for user: {}", user.getEmail());
+                refreshTokenRepository.revokeAllByUserId(user.getId());
+                throw new AppException("Security alert: session has been compromised. Please log in again.",
+                        HttpStatus.UNAUTHORIZED
+                );
+            }
+        }
+
+        if (refreshToken.isExpired()) {
+            throw new AppException("Refresh token is expired",
                     HttpStatus.UNAUTHORIZED
             );
         }
 
         refreshToken.setRevoked(true);
+        refreshToken.setRevokedAt(OffsetDateTime.now());
         refreshTokenRepository.save(refreshToken);
 
-        User user = refreshToken.getUser();
         log.info("Token refreshed for user: {}", user.getEmail());
 
         return buildAuthResponse(user);

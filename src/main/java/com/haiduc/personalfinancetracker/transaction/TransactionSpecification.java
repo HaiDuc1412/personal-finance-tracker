@@ -5,6 +5,7 @@ import com.haiduc.personalfinancetracker.common.enums.TransactionType;
 import com.haiduc.personalfinancetracker.user.User;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
@@ -58,12 +59,12 @@ public class TransactionSpecification {
     public static Specification<Transaction> inMonth(Integer month) {
         if (month == null) return noOp();
         return (root, query, cb) ->
-                cb.equal(cb.function("MONTH", Integer.class, root.get("transactionDate")), month);
+                cb.equal(((HibernateCriteriaBuilder) cb).month(root.get("transactionDate")), month);
     }
 
     public static Specification<Transaction> inYear(Integer year) {
         if (year == null) return noOp();
         return (root, query, cb) ->
-                cb.equal(cb.function("YEAR", Integer.class, root.get("transactionDate")), year);
+                cb.equal(((HibernateCriteriaBuilder) cb).year(root.get("transactionDate")), year);
     }
 }

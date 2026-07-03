@@ -27,8 +27,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
       WHERE t.user = :user
         AND t.isDeleted = false
         AND t.type = :type
-        AND FUNCTION('MONTH', t.transactionDate) = :month
-        AND FUNCTION('YEAR', t.transactionDate) = :year
+        AND EXTRACT(MONTH FROM t.transactionDate) = :month
+        AND EXTRACT(YEAR FROM t.transactionDate) = :year
       """)
   BigDecimal sumByUserAndTypeAndMonthAndYear(
       @Param("user") User user,
@@ -41,8 +41,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
       SELECT t FROM Transaction t
       WHERE t.user = :user
         AND t.isDeleted = false
-        AND FUNCTION('MONTH', t.transactionDate) = :month
-        AND FUNCTION('YEAR', t.transactionDate) = :year
+        AND EXTRACT(MONTH FROM t.transactionDate) = :month
+        AND EXTRACT(YEAR FROM t.transactionDate) = :year
       ORDER BY t.transactionDate DESC, t.createdAt DESC
       """)
   List<Transaction> findTop5ByUserAndMonthAndYear(
@@ -58,8 +58,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
       WHERE t.user = :user
         AND t.isDeleted = false
         AND t.type = 'EXPENSE'
-        AND FUNCTION('MONTH', t.transactionDate) = :month
-        AND FUNCTION('YEAR', t.transactionDate) = :year
+        AND EXTRACT(MONTH FROM t.transactionDate) = :month
+        AND EXTRACT(YEAR FROM t.transactionDate) = :year
       GROUP BY t.category.name
       ORDER BY SUM(t.amount) DESC
       """)

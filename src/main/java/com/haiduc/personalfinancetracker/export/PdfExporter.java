@@ -24,9 +24,9 @@ import java.util.List;
 public class PdfExporter {
 
     // ─── Colors ───────────────────────────────────────────────────────────────
-    private static final Color COLOR_HEADER_BG = new Color(30, 58, 138);   // indigo-900
-    private static final Color COLOR_INCOME = new Color(21, 128, 61);   // green-700
-    private static final Color COLOR_EXPENSE = new Color(185, 28, 28);   // red-700
+    private static final Color COLOR_HEADER_BG = new Color(30, 58, 138); // indigo-900
+    private static final Color COLOR_INCOME = new Color(21, 128, 61); // green-700
+    private static final Color COLOR_EXPENSE = new Color(185, 28, 28); // red-700
     private static final Color COLOR_ROW_ALT = new Color(243, 244, 246); // gray-100
     private static final Color COLOR_FOOTER_BG = new Color(249, 250, 251); // gray-50
     private static final Color COLOR_TEXT_MUTED = new Color(107, 114, 128); // gray-500
@@ -38,7 +38,6 @@ public class PdfExporter {
     private static final Font FONT_CELL = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
     private static final Font FONT_INCOME = new Font(Font.HELVETICA, 9, Font.BOLD, COLOR_INCOME);
     private static final Font FONT_EXPENSE = new Font(Font.HELVETICA, 9, Font.BOLD, COLOR_EXPENSE);
-    private static final Font FONT_SUMMARY = new Font(Font.HELVETICA, 10, Font.BOLD, Color.DARK_GRAY);
     private static final Font FONT_FOOTER = new Font(Font.HELVETICA, 8, Font.NORMAL, COLOR_TEXT_MUTED);
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -71,7 +70,7 @@ public class PdfExporter {
     private void addHeader(Document doc, User user, ExportRequest filter) throws DocumentException {
         PdfPTable headerTable = new PdfPTable(2);
         headerTable.setWidthPercentage(100);
-        headerTable.setWidths(new float[]{3f, 1f});
+        headerTable.setWidths(new float[] { 3f, 1f });
         headerTable.setSpacingAfter(20f);
 
         // Left cell — title + email
@@ -120,11 +119,11 @@ public class PdfExporter {
 
         PdfPTable table = new PdfPTable(6);
         table.setWidthPercentage(100);
-        table.setWidths(new float[]{0.5f, 1.5f, 1.2f, 2f, 1.8f, 3f});
+        table.setWidths(new float[] { 0.5f, 1.5f, 1.2f, 2f, 1.8f, 3f });
         table.setHeaderRows(1);
 
         // Column headers
-        String[] headers = {"#", "Date", "Type", "Category", "Amount", "Description"};
+        String[] headers = { "#", "Date", "Type", "Category", "Amount", "Description" };
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, FONT_HEADER));
             cell.setBackgroundColor(COLOR_HEADER_BG);
@@ -166,7 +165,8 @@ public class PdfExporter {
     // ─── Summary Section ──────────────────────────────────────────────────────
 
     private void addSummary(Document doc, List<Transaction> transactions) throws DocumentException {
-        if (transactions.isEmpty()) return;
+        if (transactions.isEmpty())
+            return;
 
         BigDecimal totalIncome = transactions.stream()
                 .filter(t -> t.getType() == TransactionType.INCOME)

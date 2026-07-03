@@ -35,6 +35,7 @@ public class Transaction extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String note;
 
+    @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 

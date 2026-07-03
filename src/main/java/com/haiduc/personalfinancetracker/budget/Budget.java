@@ -26,9 +26,11 @@ public class Budget extends BaseEntity {
     @Column(nullable = false)
     private Short year;
 
+    @Builder.Default
     @Column(name = "alert_sent_80", nullable = false)
     private boolean alertSent80 = false;
 
+    @Builder.Default
     @Column(name = "alert_sent_100", nullable = false)
     private boolean alertSent100 = false;
 

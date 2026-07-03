@@ -28,6 +28,7 @@ public class Category extends BaseEntity {
     @Column(nullable = false, length = 10)
     private TransactionType type;
 
+    @Builder.Default
     @Column(name = "is_default", nullable = false)
     private boolean isDefault = false;
 

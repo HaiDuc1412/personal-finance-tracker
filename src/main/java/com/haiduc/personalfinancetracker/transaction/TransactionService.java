@@ -1,7 +1,7 @@
 package com.haiduc.personalfinancetracker.transaction;
 
+import com.haiduc.personalfinancetracker.budget.BudgetAlertProducer;
 import com.haiduc.personalfinancetracker.budget.BudgetRepository;
-import com.haiduc.personalfinancetracker.budget.EmailService;
 import com.haiduc.personalfinancetracker.budget.event.BudgetAlertEvent;
 import com.haiduc.personalfinancetracker.category.Category;
 import com.haiduc.personalfinancetracker.category.CategoryRepository;
@@ -35,7 +35,7 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
     private final BudgetRepository budgetRepository;
-    private final EmailService emailService;
+    private final BudgetAlertProducer budgetAlertProducer;
 
     public Page<TransactionResponse> getTransactions(
             User currentUser,
@@ -187,7 +187,7 @@ public class TransactionService {
             // Kiểm tra 80% trước – gửi nếu chưa từng gửi
             if (percentage >= 80.0 && !budget.isAlertSent80()) {
                 budget.setAlertSent80(true);
-                emailService.sendBudgetAlert(BudgetAlertEvent.builder()
+                budgetAlertProducer.sendAlert(BudgetAlertEvent.builder()
                         .userId(user.getId())
                         .userEmail(user.getEmail())
                         .categoryName(budget.getCategory().getName())
@@ -203,7 +203,7 @@ public class TransactionService {
             // Kiểm tra 100% độc lập – gửi nếu chưa từng gửi
             if (percentage >= 100.0 && !budget.isAlertSent100()) {
                 budget.setAlertSent100(true);
-                emailService.sendBudgetAlert(BudgetAlertEvent.builder()
+                budgetAlertProducer.sendAlert(BudgetAlertEvent.builder()
                         .userId(user.getId())
                         .userEmail(user.getEmail())
                         .categoryName(budget.getCategory().getName())

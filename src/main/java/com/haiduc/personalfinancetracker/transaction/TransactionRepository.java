@@ -16,58 +16,56 @@ import java.util.UUID;
 
 public interface TransactionRepository extends JpaRepository<Transaction, UUID>, JpaSpecificationExecutor<Transaction> {
 
-    @Modifying
-    @Query("UPDATE Transaction t SET t.category.id = :newCategoryId WHERE t.category.id = :oldCategoryId")
-    void reassignCategory(@Param("oldCategoryId") UUID oldCategoryId,
-                          @Param("newCategoryId") UUID newCategoryId);
+        @Modifying
+        @Query("UPDATE Transaction t SET t.category.id = :newCategoryId WHERE t.category.id = :oldCategoryId")
+        void reassignCategory(@Param("oldCategoryId") UUID oldCategoryId,
+                        @Param("newCategoryId") UUID newCategoryId);
 
+        // Tổng income/expense theo tháng
+        @Query("""
+                        SELECT COALESCE(SUM(t.amount), 0)
+                        FROM Transaction t
+                        WHERE t.user = :user
+                          AND t.isDeleted = false
+                          AND t.type = :type
+                          AND FUNCTION('MONTH', t.transactionDate) = :month
+                          AND FUNCTION('YEAR', t.transactionDate) = :year
+                        """)
+        BigDecimal sumByUserAndTypeAndMonthAndYear(
+                        @Param("user") User user,
+                        @Param("type") TransactionType type,
+                        @Param("month") int month,
+                        @Param("year") int year);
 
+        // 5 giao dịch gần nhất
+        @Query("""
+                        SELECT t FROM Transaction t
+                        WHERE t.user = :user
+                          AND t.isDeleted = false
+                          AND FUNCTION('MONTH', t.transactionDate) = :month
+                          AND FUNCTION('YEAR', t.transactionDate) = :year
+                        ORDER BY t.transactionDate DESC, t.createdAt DESC
+                        """)
+        List<Transaction> findTop5ByUserAndMonthAndYear(
+                        @Param("user") User user,
+                        @Param("month") int month,
+                        @Param("year") int year,
+                        Pageable pageable);
 
-    // Tổng income/expense theo tháng
-    @Query("""
-            SELECT COALESCE(SUM(t.amount), 0)
-            FROM Transaction t
-            WHERE t.user = :user
-              AND t.isDeleted = false
-              AND t.type = :type
-              AND FUNCTION('MONTH', t.transactionDate) = :month
-              AND FUNCTION('YEAR', t.transactionDate) = :year
-            """)
-    BigDecimal sumByUserAndTypeAndMonthAndYear(
-            @Param("user") User user,
-            @Param("type") TransactionType type,
-            @Param("month") int month,
-            @Param("year") int year);
-
-    // 5 giao dịch gần nhất
-    @Query("""
-            SELECT t FROM Transaction t
-            WHERE t.user = :user
-              AND t.isDeleted = false
-              AND FUNCTION('MONTH', t.transactionDate) = :month
-              AND FUNCTION('YEAR', t.transactionDate) = :year
-            ORDER BY t.transactionDate DESC, t.createdAt DESC
-            """)
-    List<Transaction> findTop5ByUserAndMonthAndYear(
-            @Param("user") User user,
-            @Param("month") int month,
-            @Param("year") int year,
-            Pageable pageable);
-
-    // Expense theo từng category trong tháng
-    @Query("""
-            SELECT t.category.name, COALESCE(SUM(t.amount), 0)
-            FROM Transaction t
-            WHERE t.user = :user
-              AND t.isDeleted = false
-              AND t.type = 'EXPENSE'
-              AND FUNCTION('MONTH', t.transactionDate) = :month
-              AND FUNCTION('YEAR', t.transactionDate) = :year
-            GROUP BY t.category.name
-            ORDER BY SUM(t.amount) DESC
-            """)
-    List<Object[]> findExpenseGroupedByCategoryAndMonth(
-            @Param("user") User user,
-            @Param("month") int month,
-            @Param("year") int year);
+        // Expense theo từng category trong tháng
+        @Query("""
+                        SELECT t.category.name, COALESCE(SUM(t.amount), 0)
+                        FROM Transaction t
+                        WHERE t.user = :user
+                          AND t.isDeleted = false
+                          AND t.type = 'EXPENSE'
+                          AND FUNCTION('MONTH', t.transactionDate) = :month
+                          AND FUNCTION('YEAR', t.transactionDate) = :year
+                        GROUP BY t.category.name
+                        ORDER BY SUM(t.amount) DESC
+                        """)
+        List<Object[]> findExpenseGroupedByCategoryAndMonth(
+                        @Param("user") User user,
+                        @Param("month") int month,
+                        @Param("year") int year);
 }

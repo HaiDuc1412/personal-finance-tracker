@@ -40,13 +40,10 @@ public class AuthService {
     @Value("${app.jwt.refresh-token-expiry}")
     private long refreshTokenExpiry;
 
-
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException(
-                    "Email already registered: " + request.getEmail()
-            );
+            throw new DuplicateResourceException("Email already registered: " + request.getEmail());
         }
 
         User user = User.builder()
@@ -63,20 +60,13 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
-
     @Transactional
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "User", "email", request.getEmail()
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
 
         refreshTokenRepository.revokeAllByUserId(user.getId());
 
@@ -84,39 +74,34 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
-
     @Transactional
     public AuthResponse refresh(RefreshTokenRequest request) {
         String tokenHash = hashToken(request.getRefreshToken());
 
         RefreshToken refreshToken = refreshTokenRepository
                 .findByTokenHash(tokenHash)
-                .orElseThrow(() -> new AppException("Invalid refresh token",
-                        HttpStatus.UNAUTHORIZED
-                ));
+                .orElseThrow(() -> new AppException("Invalid refresh token", HttpStatus.UNAUTHORIZED));
 
         User user = refreshToken.getUser();
 
         if (refreshToken.isRevoked()) {
             OffsetDateTime revokedAt = refreshToken.getRevokedAt();
-            long gracePeriodSeconds = 15; // 15 seconds grace period for race conditions/network retries
+            long gracePeriodSeconds = 15;
 
             if (revokedAt != null && revokedAt.plusSeconds(gracePeriodSeconds).isAfter(OffsetDateTime.now())) {
                 log.info("Concurrent refresh request within grace period for user: {}", user.getEmail());
                 return buildAuthResponse(user);
             } else {
-                log.warn("Security alert: reused refresh token detected outside grace period for user: {}", user.getEmail());
+                log.warn("Security alert: reused refresh token detected outside grace period for user: {}",
+                        user.getEmail());
                 refreshTokenRepository.revokeAllByUserId(user.getId());
                 throw new AppException("Security alert: session has been compromised. Please log in again.",
-                        HttpStatus.UNAUTHORIZED
-                );
+                        HttpStatus.UNAUTHORIZED);
             }
         }
 
         if (refreshToken.isExpired()) {
-            throw new AppException("Refresh token is expired",
-                    HttpStatus.UNAUTHORIZED
-            );
+            throw new AppException("Refresh token is expired", HttpStatus.UNAUTHORIZED);
         }
 
         refreshToken.setRevoked(true);
@@ -127,7 +112,6 @@ public class AuthService {
 
         return buildAuthResponse(user);
     }
-
 
     @Transactional
     public void logout(RefreshTokenRequest request) {
@@ -141,7 +125,6 @@ public class AuthService {
                 });
     }
 
-
     private AuthResponse buildAuthResponse(User user) {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
@@ -152,7 +135,7 @@ public class AuthService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
-                .expiresIn(900)   // 15 phút = 900 giây
+                .expiresIn(900) // 15 phút = 900 giây
                 .user(AuthResponse.UserInfo.builder()
                         .id(user.getId().toString())
                         .email(user.getEmail())
@@ -178,8 +161,7 @@ public class AuthService {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(
-                    rawToken.getBytes(StandardCharsets.UTF_8)
-            );
+                    rawToken.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 not available", e);

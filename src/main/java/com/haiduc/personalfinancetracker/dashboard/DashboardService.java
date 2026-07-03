@@ -30,22 +30,28 @@ public class DashboardService {
     private final TransactionRepository transactionRepository;
     private final BudgetRepository budgetRepository;
 
-    @Cacheable(value = "dashboard", key = "#currentUser.id + ':' + #resolvedMonth + ':' + #resolvedYear")
-    @Transactional(readOnly = true)
+    /**
+     * Entry point — resolve month/year rồi delegate sang cacheable method.
+     * Tách ra để SpEL đọc được param trong @Cacheable key.
+     */
     public DashboardResponse getDashboard(User currentUser, Integer month, Integer year) {
-        // Default tháng hiện tại
         LocalDate now = LocalDate.now();
         int resolvedMonth = (month != null) ? month : now.getMonthValue();
-        int resolvedYear = (year != null) ? year : now.getYear();
+        int resolvedYear  = (year  != null) ? year  : now.getYear();
+        return getDashboardCached(currentUser, resolvedMonth, resolvedYear);
+    }
 
-        MonthlySummary monthlySummary = buildMonthlySummary(currentUser, resolvedMonth, resolvedYear);
-        List<BudgetSummary> budgets = buildBudgetSummaries(currentUser, resolvedMonth, resolvedYear);
-        List<TransactionResponse> recent = buildRecentTransactions(currentUser, resolvedMonth, resolvedYear);
-        List<ExpenseByCategory> expense = buildExpenseByCategory(currentUser, resolvedMonth, resolvedYear);
+    @Cacheable(value = "dashboard", key = "#currentUser.id + ':' + #month + ':' + #year")
+    @Transactional(readOnly = true)
+    public DashboardResponse getDashboardCached(User currentUser, int month, int year) {
+        MonthlySummary monthlySummary = buildMonthlySummary(currentUser, month, year);
+        List<BudgetSummary> budgets   = buildBudgetSummaries(currentUser, month, year);
+        List<TransactionResponse> recent = buildRecentTransactions(currentUser, month, year);
+        List<ExpenseByCategory> expense  = buildExpenseByCategory(currentUser, month, year);
 
         return DashboardResponse.builder()
-                .month(resolvedMonth)
-                .year(resolvedYear)
+                .month(month)
+                .year(year)
                 .monthlySummary(monthlySummary)
                 .budgetSummaries(budgets)
                 .recentTransactions(recent)
